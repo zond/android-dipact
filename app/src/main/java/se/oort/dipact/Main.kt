@@ -3,12 +3,12 @@ package se.oort.dipact
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import android.view.Window
-import android.view.WindowManager
 import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -25,6 +25,7 @@ class Main : AppCompatActivity() {
 
     private val RC_SIGNIN = 9001
     private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com";
+    private val SERVER_URL = "http://localhost:8080"
 
     inner class WebAppInterface(private val mContext: Context) {
         @JavascriptInterface
@@ -37,8 +38,9 @@ class Main : AppCompatActivity() {
         web_view.loadUrl("https://dipact.appspot.com?token=" + token)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onResume() {
+        super.onResume()
+        supportActionBar!!.hide()
         window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_LOW_PROFILE or
                     View.SYSTEM_UI_FLAG_FULLSCREEN or
@@ -48,10 +50,19 @@ class Main : AppCompatActivity() {
                     View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
                     View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }
+        web_view.setWebViewClient(WebViewClient())
         web_view.settings.javaScriptEnabled = true
         web_view.settings.domStorageEnabled = true
-        login()
+        web_view.addJavascriptInterface(WebAppInterface(this), "Wrapper")
+        web_view.loadUrl(SERVER_URL)
     }
 
     private fun login() {
@@ -96,11 +107,10 @@ class Main : AppCompatActivity() {
             if (url == null) {
                 throw RuntimeException("No Location header in response " + response.body!!.string())
             }
-            Log.d("Dipact", url)
             val parsedURI: Uri = Uri.parse(url)
                 ?: throw java.lang.RuntimeException("Unparseable Location header " + url.toString() + " in response")
             runOnUiThread {
-                loadWebView(parsedURI.getQueryParameter("token")!!)
+                web_view.loadUrl(SERVER_URL + "?token=" + parsedURI.getQueryParameter("token")!!)
             }
         }.start()
     }

@@ -1,10 +1,14 @@
 package se.oort.dipact
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.Window
+import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -21,6 +25,56 @@ class Main : AppCompatActivity() {
 
     private val RC_SIGNIN = 9001
     private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com";
+
+    inner class WebAppInterface(private val mContext: Context) {
+        @JavascriptInterface
+        fun login() {
+            this@Main.login()
+        }
+    }
+
+    private fun loadWebView(token: String) {
+        web_view.loadUrl("https://dipact.appspot.com?token=" + token)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LOW_PROFILE or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        setContentView(R.layout.activity_main)
+        web_view.settings.javaScriptEnabled = true
+        web_view.settings.domStorageEnabled = true
+        login()
+    }
+
+    private fun login() {
+        val gso =
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestServerAuthCode(CLIENT_ID)
+                .build()
+        val mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+        startActivityForResult(mGoogleSignInClient.getSignInIntent(), RC_SIGNIN)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == RC_SIGNIN) {
+            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
+            if (result!!.isSuccess) {
+                finishLogin(result.signInAccount!!)
+            } else {
+                throw RuntimeException("Failed login: " + result.status)
+            }
+        }
+    }
 
     private fun finishLogin(account : GoogleSignInAccount) {
         Thread {
@@ -42,53 +96,12 @@ class Main : AppCompatActivity() {
             if (url == null) {
                 throw RuntimeException("No Location header in response " + response.body!!.string())
             }
+            Log.d("Dipact", url)
             val parsedURI: Uri = Uri.parse(url)
                 ?: throw java.lang.RuntimeException("Unparseable Location header " + url.toString() + " in response")
             runOnUiThread {
                 loadWebView(parsedURI.getQueryParameter("token")!!)
             }
         }.start()
-    }
-
-    private fun loadWebView(token: String) {
-        web_view.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LOW_PROFILE or
-                    View.SYSTEM_UI_FLAG_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        web_view.settings.javaScriptEnabled = true
-        web_view.settings.domStorageEnabled = true
-        web_view.loadUrl("https://dipact.appspot.com?token=" + token)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_main)
-
-        val gso =
-            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestServerAuthCode(CLIENT_ID)
-                .build()
-        val mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-        startActivityForResult(mGoogleSignInClient.getSignInIntent(), RC_SIGNIN)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if(requestCode == RC_SIGNIN) {
-            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-            if (result!!.isSuccess) {
-                finishLogin(result!!.signInAccount!!)
-            } else {
-                throw RuntimeException("Failed login: " + result!!.status)
-            }
-        }
     }
 }

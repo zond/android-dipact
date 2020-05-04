@@ -42,7 +42,6 @@ class Main : AppCompatActivity() {
             if (url == null) {
                 throw RuntimeException("No Location header in response " + response.body!!.string())
             }
-            Log.d("Dipact", url)
             val parsedURI: Uri = Uri.parse(url)
                 ?: throw java.lang.RuntimeException("Unparseable Location header " + url.toString() + " in response")
             runOnUiThread {

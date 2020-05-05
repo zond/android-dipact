@@ -24,13 +24,13 @@ import java.util.concurrent.TimeUnit
 class Main : AppCompatActivity() {
 
     private val RC_SIGNIN = 9001
-    private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com";
-    private val SERVER_URL = "http://localhost:8080"
+    private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com"
+    private val SERVER_URL = if (BuildConfig.DEBUG) "http://localhost:8080" else "https://dipact.appspot.com"
 
     inner class WebAppInterface(private val mContext: Context) {
         @JavascriptInterface
-        fun login() {
-            this@Main.login()
+        fun getToken() {
+            this@Main.getToken()
         }
     }
 
@@ -65,7 +65,7 @@ class Main : AppCompatActivity() {
         web_view.loadUrl(SERVER_URL)
     }
 
-    private fun login() {
+    private fun getToken() {
         val gso =
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -110,7 +110,9 @@ class Main : AppCompatActivity() {
             val parsedURI: Uri = Uri.parse(url)
                 ?: throw java.lang.RuntimeException("Unparseable Location header " + url.toString() + " in response")
             runOnUiThread {
-                web_view.loadUrl(SERVER_URL + "?token=" + parsedURI.getQueryParameter("token")!!)
+                web_view.evaluateJavascript (
+                    "Globals.WrapperCallbacks.getToken('" + parsedURI.getQueryParameter("token")!! + "');",
+                    null);
             }
         }.start()
     }

@@ -26,6 +26,7 @@ class Main : AppCompatActivity() {
     private val RC_SIGNIN = 9001
     private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com"
     private val SERVER_URL = if (BuildConfig.DEBUG) "http://localhost:8080" else "https://dipact.appspot.com"
+    //private val SERVER_URL = "https://dipact.appspot.com"
 
     inner class WebAppInterface(private val mContext: Context) {
         @JavascriptInterface

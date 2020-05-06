@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -14,12 +15,17 @@ import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
+const val TAG = "Dipact"
+var MainActivity: Main? = null
+var FCMToken: String? = null
 
 class Main : AppCompatActivity() {
 
@@ -33,6 +39,29 @@ class Main : AppCompatActivity() {
         fun getToken() {
             this@Main.getToken()
         }
+        @JavascriptInterface
+        fun startFCM() {
+            MainActivity = this@Main
+            if (FCMToken != null) {
+                this@Main.onNewFCMToken(FCMToken!!)
+            }
+            FirebaseInstanceId.getInstance().instanceId
+                .addOnCompleteListener(OnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Log.e(TAG, "getInstanceId failed", task.exception)
+                        return@OnCompleteListener
+                    }
+                    if (task.result?.token != FCMToken) {
+                        FCMToken = task.result?.token
+                        Log.d(TAG, "Got FCM token " + FCMToken!!)
+                        this@Main.onNewFCMToken(FCMToken!!)
+                    }
+                })
+        }
+    }
+
+    fun onNewFCMToken(fcmToken: String) {
+        web_view.evaluateJavascript("Globals.messaging.onNewToken('" + fcmToken + "');", null)
     }
 
     private fun loadWebView(token: String) {
@@ -55,6 +84,20 @@ class Main : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        FirebaseInstanceId.getInstance().instanceId
+            .addOnCompleteListener(OnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w(TAG, "getInstanceId failed", task.exception)
+                    return@OnCompleteListener
+                }
+
+                // Get new Instance ID token
+                val token = task.result?.token
+                // Log and toast
+                Log.d(TAG, "got token " + token)
+            })
+
         setContentView(R.layout.activity_main)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true)

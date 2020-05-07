@@ -25,7 +25,10 @@ import java.util.concurrent.TimeUnit
 
 const val TAG = "Dipact"
 const val RC_NOTIFICATION = 9002
+const val DIPLICITY_JSON = "DiplicityJSON"
 const val CLICK_ACTION = "clickAction"
+const val CHANNEL_ID = "default_channel"
+
 
 var MainActivity: Main? = null
 var FCMToken: String? = null
@@ -33,8 +36,10 @@ var FCMToken: String? = null
 class Main : AppCompatActivity() {
 
     private val RC_SIGNIN = 9001
-    private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com"
-    private val SERVER_URL = if (BuildConfig.DEBUG) "http://localhost:8080" else "https://dipact.appspot.com"
+    private val CLIENT_ID =
+        "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com"
+    private val SERVER_URL =
+        if (BuildConfig.DEBUG) "http://localhost:8080" else "https://dipact.appspot.com"
     private var pendingAction: String? = null;
 
     inner class WebAppInterface(private val mContext: Context) {
@@ -42,6 +47,7 @@ class Main : AppCompatActivity() {
         fun getToken() {
             this@Main.getToken()
         }
+
         @JavascriptInterface
         fun startFCM() {
             MainActivity = this@Main
@@ -61,9 +67,15 @@ class Main : AppCompatActivity() {
                     }
                 })
         }
+
         @JavascriptInterface
         fun pendingAction(): String? {
             return this@Main.pendingAction
+        }
+
+        @JavascriptInterface
+        fun bounceNotification(payload: String) {
+            ShowNotification(this@Main, payload)
         }
     }
 
@@ -73,29 +85,44 @@ class Main : AppCompatActivity() {
         }
     }
 
-    private fun loadWebView(token: String) {
-        web_view.loadUrl("https://dipact.appspot.com?token=" + token)
-    }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent!!.extras != null) {
-            pendingAction = intent.extras!!.getString(CLICK_ACTION, null)
-            if (pendingAction != null) {
-                runOnUiThread {
-                    web_view.evaluateJavascript(
-                        "if (window.Globals && window.Globals.messaging && window.Globals.messaging.main) {" +
-                                "window.Globals.messaging.main.renderPath('" + pendingAction + "'); }", null)
-                }
-            }
+        if (intent!!.extras != null && intent.extras!!.getString(CLICK_ACTION, null) != null) {
+            executeAction(intent.extras!!.getString(CLICK_ACTION, null))
         }
+    }
+
+    fun executeAction(action: String) {
+        pendingAction = action
+        runOnUiThread {
+            web_view.evaluateJavascript(
+                "if (window.Globals && window.Globals.messaging && window.Globals.messaging.main) {" +
+                        "window.Globals.messaging.main.renderPath(\"" + action + "\");" +
+                        "}", null
+            )
+        }
+    }
+
+    fun incomingPayload(payload: String) {
+        runOnUiThread {
+            web_view.evaluateJavascript(
+                "if (window.Globals && window.Globals.messaging) {" +
+                        "window.Globals.messaging.onWrapperMessage(\"" + payload + "\");" +
+                        "}", null
+            )
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        MainActivity = null
     }
 
     override fun onResume() {
         super.onResume()
         supportActionBar!!.hide()
-        if (intent!!.extras != null) {
-            pendingAction = intent.extras!!.getString(CLICK_ACTION, null)
+        if (intent!!.extras != null && intent.extras!!.getString(CLICK_ACTION, null) != null) {
+            executeAction(intent.extras!!.getString(CLICK_ACTION, null))
         }
     }
 
@@ -154,7 +181,7 @@ class Main : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == RC_SIGNIN) {
+        if (requestCode == RC_SIGNIN) {
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
             if (result!!.isSuccess) {
                 finishLogin(result.signInAccount!!)
@@ -164,11 +191,16 @@ class Main : AppCompatActivity() {
         }
     }
 
-    private fun finishLogin(account : GoogleSignInAccount) {
+    private fun finishLogin(account: GoogleSignInAccount) {
         Thread {
-            val request = Request.Builder().url("https://diplicity-engine.appspot.com/Auth/OAuth2Callback?code=" +
-                    URLEncoder.encode(account.getServerAuthCode(), "UTF-8") +
-                    "&approve-redirect=true&state=" + URLEncoder.encode("https://android-dipact", "UTF-8"))
+            val request = Request.Builder().url(
+                "https://diplicity-engine.appspot.com/Auth/OAuth2Callback?code=" +
+                        URLEncoder.encode(account.getServerAuthCode(), "UTF-8") +
+                        "&approve-redirect=true&state=" + URLEncoder.encode(
+                    "https://android-dipact",
+                    "UTF-8"
+                )
+            )
             val response = OkHttpClient.Builder()
                 .followRedirects(false)
                 .followSslRedirects(false)
@@ -187,9 +219,10 @@ class Main : AppCompatActivity() {
             val parsedURI: Uri = Uri.parse(url)
                 ?: throw java.lang.RuntimeException("Unparseable Location header " + url.toString() + " in response")
             runOnUiThread {
-                web_view.evaluateJavascript (
+                web_view.evaluateJavascript(
                     "Globals.WrapperCallbacks.getToken('" + parsedURI.getQueryParameter("token")!! + "');",
-                    null);
+                    null
+                );
             }
         }.start()
     }

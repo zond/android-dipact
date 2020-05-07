@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
+import android.view.KeyEvent
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -24,6 +24,9 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 const val TAG = "Dipact"
+const val RC_NOTIFICATION = 9002
+const val CLICK_ACTION = "clickAction"
+
 var MainActivity: Main? = null
 var FCMToken: String? = null
 
@@ -32,7 +35,7 @@ class Main : AppCompatActivity() {
     private val RC_SIGNIN = 9001
     private val CLIENT_ID = "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com"
     private val SERVER_URL = if (BuildConfig.DEBUG) "http://localhost:8080" else "https://dipact.appspot.com"
-    //private val SERVER_URL = "https://dipact.appspot.com"
+    private var pendingAction: String? = null;
 
     inner class WebAppInterface(private val mContext: Context) {
         @JavascriptInterface
@@ -58,28 +61,58 @@ class Main : AppCompatActivity() {
                     }
                 })
         }
+        @JavascriptInterface
+        fun pendingAction(): String? {
+            return this@Main.pendingAction
+        }
     }
 
     fun onNewFCMToken(fcmToken: String) {
-        web_view.evaluateJavascript("Globals.messaging.onNewToken('" + fcmToken + "');", null)
+        runOnUiThread {
+            web_view.evaluateJavascript("Globals.messaging.onNewToken('" + fcmToken + "');", null)
+        }
     }
 
     private fun loadWebView(token: String) {
         web_view.loadUrl("https://dipact.appspot.com?token=" + token)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent!!.extras != null) {
+            pendingAction = intent.extras!!.getString(CLICK_ACTION, null)
+            if (pendingAction != null) {
+                runOnUiThread {
+                    web_view.evaluateJavascript(
+                        "if (window.Globals && window.Globals.messaging && window.Globals.messaging.main) {" +
+                                "window.Globals.messaging.main.renderPath('" + pendingAction + "'); }", null)
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         supportActionBar!!.hide()
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LOW_PROFILE or
-                    View.SYSTEM_UI_FLAG_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        if (intent!!.extras != null) {
+            pendingAction = intent.extras!!.getString(CLICK_ACTION, null)
+        }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_BACK -> {
+                    if (web_view.canGoBack()) {
+                        web_view.goBack()
+                    } else {
+                        finish()
+                    }
+                    return true
+                }
+            }
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

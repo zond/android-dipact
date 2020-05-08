@@ -1,4 +1,4 @@
-package se.oort.dipact
+package se.oort.diplicity
 
 import android.content.Context
 import android.content.Intent
@@ -197,7 +197,7 @@ class Main : AppCompatActivity() {
                 "https://diplicity-engine.appspot.com/Auth/OAuth2Callback?code=" +
                         URLEncoder.encode(account.getServerAuthCode(), "UTF-8") +
                         "&approve-redirect=true&state=" + URLEncoder.encode(
-                    "https://android-dipact",
+                    "https://android-diplicity",
                     "UTF-8"
                 )
             )

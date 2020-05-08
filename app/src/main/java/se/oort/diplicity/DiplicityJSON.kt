@@ -1,4 +1,4 @@
-package se.oort.dipact
+package se.oort.diplicity
 
 import java.util.*
 

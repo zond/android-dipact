@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="se.oort.dipact">
+    package="se.oort.diplicity">
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -13,7 +13,7 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".Main"
+            android:name="se.oort.diplicity.Main"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_main"
             android:theme="@style/FullscreenTheme">
@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".MessagingService"
+            android:name="se.oort.diplicity.MessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

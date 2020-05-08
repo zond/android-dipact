@@ -14,7 +14,7 @@ android {
     buildToolsVersion "29.0.3"
 
     defaultConfig {
-        applicationId "se.oort.dipact"
+        applicationId "se.oort.diplicity"
         minSdkVersion 16
         targetSdkVersion 29
         versionCode gitVersionCode.toInteger()

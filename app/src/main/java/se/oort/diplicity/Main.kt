@@ -1,5 +1,7 @@
 package se.oort.diplicity
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -22,6 +24,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
+
 
 const val TAG = "Dipact"
 const val RC_NOTIFICATION = 9002
@@ -76,6 +79,14 @@ class Main : AppCompatActivity() {
         @JavascriptInterface
         fun bounceNotification(payload: String) {
             ShowNotification(this@Main, payload)
+        }
+
+        @JavascriptInterface
+        fun copyToClipboard(text: String) {
+            val clipboard: ClipboardManager =
+                getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("dipact", text)
+            clipboard.setPrimaryClip(clip)
         }
     }
 
@@ -186,7 +197,13 @@ class Main : AppCompatActivity() {
             if (result!!.isSuccess) {
                 finishLogin(result.signInAccount!!)
             } else {
-                throw RuntimeException("Failed login: " + result.status)
+                Log.e(TAG, "Error logging in: " + result.status)
+                runOnUiThread {
+                    web_view.evaluateJavascript(
+                        "Globals.WrapperCallbacks.getToken({error: '" + result.status + "'});",
+                        null
+                    );
+                }
             }
         }
     }
@@ -210,17 +227,26 @@ class Main : AppCompatActivity() {
                 .build()
                 .newCall(request.build()).execute()
             if (response.code != 307) {
-                throw RuntimeException("Unsuccessful response " + response.body!!.string())
+                Log.e(TAG, "Error logging in: " + response.code + "/" + response.body!!.string())
+                runOnUiThread {
+                    web_view.evaluateJavascript(
+                        "Globals.WrapperCallbacks.getToken({error: '" + response.body!!.string() + "'});",
+                        null
+                    );
+                }
             }
             val url = response.headers["Location"]
             if (url == null) {
-                throw RuntimeException("No Location header in response " + response.body!!.string())
+                Log.e(TAG, "Error logging in, missing Location header: " + response.code + "/" + response.body!!.string())
+                web_view.evaluateJavascript(
+                    "Globals.WrapperCallbacks.getToken({error: 'No Location header in response: " + response.body!!.string() + "'});",
+                    null
+                );
             }
             val parsedURI: Uri = Uri.parse(url)
-                ?: throw java.lang.RuntimeException("Unparseable Location header " + url.toString() + " in response")
             runOnUiThread {
                 web_view.evaluateJavascript(
-                    "Globals.WrapperCallbacks.getToken('" + parsedURI.getQueryParameter("token")!! + "');",
+                    "Globals.WrapperCallbacks.getToken({token: '" + parsedURI.getQueryParameter("token")!! + "'});",
                     null
                 );
             }

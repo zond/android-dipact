@@ -20,7 +20,7 @@ buildscript {
 
 ext {
     git = org.ajoberstar.grgit.Grgit.open(currentDir: project.rootDir)
-    gitVersionCode = "${git.log().size()}"
+    gitVersionCode = "${git.log().size() + 1000}"
     gitVersionName = "${git.head().abbreviatedId}"
 }
 

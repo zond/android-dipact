@@ -26,7 +26,7 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 
-const val TAG = "Dipact"
+const val TAG = "Diplicity"
 const val RC_NOTIFICATION = 9002
 const val DIPLICITY_JSON = "DiplicityJSON"
 const val CLICK_ACTION = "clickAction"
@@ -85,7 +85,7 @@ class Main : AppCompatActivity() {
         fun copyToClipboard(text: String) {
             val clipboard: ClipboardManager =
                 getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("dipact", text)
+            val clip = ClipData.newPlainText("diplicity", text)
             clipboard.setPrimaryClip(clip)
         }
     }

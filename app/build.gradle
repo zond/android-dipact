@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     apply plugin: 'com.google.gms.google-services'
+    apply plugin: 'com.google.firebase.crashlytics'
     signingConfigs {
         debug {
             storeFile file('/home/zond/.android/debug.keystore')
@@ -48,9 +49,11 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.firebase:firebase-analytics:17.4.1'
+    implementation 'com.google.firebase:firebase-crashlytics:17.0.0'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.google.firebase:firebase-messaging:20.1.6'
-    implementation 'com.google.firebase:firebase-analytics:17.4.0'
+    implementation 'com.google.firebase:firebase-analytics:17.4.1'
     implementation("com.squareup.okhttp3:okhttp:4.6.0")
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.72"

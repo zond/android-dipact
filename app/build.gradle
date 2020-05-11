@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId "se.oort.diplicity"
-        minSdkVersion 16
+        minSdkVersion 17
         targetSdkVersion 29
         versionCode gitVersionCode.toInteger()
         versionName gitVersionName

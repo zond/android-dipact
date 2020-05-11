@@ -172,6 +172,12 @@ class Main : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true)
+        } else {
+            val databasePath = web_view.getContext().getDir(
+                "databases",
+                Context.MODE_PRIVATE
+            ).getPath()
+            web_view.settings.databasePath = databasePath
         }
         web_view.setWebViewClient(WebViewClient())
         web_view.settings.javaScriptEnabled = true

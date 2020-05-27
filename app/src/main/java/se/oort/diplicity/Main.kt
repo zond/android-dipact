@@ -8,7 +8,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -108,7 +107,7 @@ class Main : AppCompatActivity() {
 
     fun onNewFCMToken(fcmToken: String) {
         runOnUiThread {
-            web_view.evaluateJavascript("Globals.messaging.onNewToken('" + fcmToken + "');", null)
+            runJavascript("Globals.messaging.onNewToken('" + fcmToken + "');")
         }
     }
 
@@ -122,21 +121,17 @@ class Main : AppCompatActivity() {
     fun executeAction(action: String) {
         pendingAction = action
         runOnUiThread {
-            web_view.evaluateJavascript(
-                "if (window.Globals && window.Globals.messaging && window.Globals.messaging.main) {" +
-                        "window.Globals.messaging.main.renderPath(\"" + action + "\");" +
-                        "}", null
-            )
+            runJavascript("if (window.Globals && window.Globals.messaging && window.Globals.messaging.main) {" +
+                    "window.Globals.messaging.main.renderPath(\"" + action + "\");" +
+                    "}")
         }
     }
 
     fun incomingPayload(payload: String) {
         runOnUiThread {
-            web_view.evaluateJavascript(
-                "if (window.Globals && window.Globals.messaging) {" +
-                        "window.Globals.messaging.onWrapperMessage(\"" + payload + "\");" +
-                        "}", null
-            )
+            runJavascript("if (window.Globals && window.Globals.messaging) {" +
+                    "window.Globals.messaging.onWrapperMessage(\"" + payload + "\");" +
+                    "}")
         }
     }
 
@@ -201,6 +196,16 @@ class Main : AppCompatActivity() {
                 this@Main.web_view.visibility = WebView.VISIBLE
                 this@Main.loading_content.visibility = View.GONE
             }
+            override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
+                if (url == null) {
+                    return false
+                }
+                if (url.startsWith(SERVER_URL)) {
+                    return false
+                }
+                this@Main.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                return true
+            }
         })
         web_view.settings.javaScriptEnabled = true
         web_view.settings.domStorageEnabled = true
@@ -223,6 +228,14 @@ class Main : AppCompatActivity() {
         startActivityForResult(mGoogleSignInClient.getSignInIntent(), RC_SIGNIN)
     }
 
+    private fun runJavascript(script: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            web_view.evaluateJavascript(script, null)
+        } else {
+            web_view.loadUrl("javascript:" + script)
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGNIN) {
@@ -232,10 +245,7 @@ class Main : AppCompatActivity() {
             } else {
                 Log.e(TAG, "Error logging in: " + result.status)
                 runOnUiThread {
-                    web_view.evaluateJavascript(
-                        "Globals.WrapperCallbacks.getToken({error: '" + result.status + "'});",
-                        null
-                    );
+                    runJavascript("Globals.WrapperCallbacks.getToken({error: '" + result.status + "'});")
                 }
             }
         }
@@ -262,10 +272,7 @@ class Main : AppCompatActivity() {
             if (response.code != 307) {
                 Log.e(TAG, "Error logging in: " + response.code + "/" + response.body!!.string())
                 runOnUiThread {
-                    web_view.evaluateJavascript(
-                        "Globals.WrapperCallbacks.getToken({error: '" + response.body!!.string() + "'});",
-                        null
-                    );
+                    runJavascript("Globals.WrapperCallbacks.getToken({error: '" + response.body!!.string() + "'});")
                 }
             }
             val url = response.headers["Location"]
@@ -274,17 +281,11 @@ class Main : AppCompatActivity() {
                     TAG,
                     "Error logging in, missing Location header: " + response.code + "/" + response.body!!.string()
                 )
-                web_view.evaluateJavascript(
-                    "Globals.WrapperCallbacks.getToken({error: 'No Location header in response: " + response.body!!.string() + "'});",
-                    null
-                );
+                runJavascript("Globals.WrapperCallbacks.getToken({error: 'No Location header in response: " + response.body!!.string() + "'});")
             }
             val parsedURI: Uri = Uri.parse(url)
             runOnUiThread {
-                web_view.evaluateJavascript(
-                    "Globals.WrapperCallbacks.getToken({token: '" + parsedURI.getQueryParameter("token")!! + "'});",
-                    null
-                );
+                runJavascript("Globals.WrapperCallbacks.getToken({token: '" + parsedURI.getQueryParameter("token")!! + "'});")
             }
         }.start()
     }

@@ -3,12 +3,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
+    android:background="@color/black_overlay"
     tools:context=".Main">
 
         <WebView
             android:id="@+id/web_view"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+        <RelativeLayout
+            android:id="@+id/loading_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+                <TextView
+                    android:textColor="@color/colorAccent"
+                    android:text="@string/loading_app"
+                    android:id="@+id/loading_text"
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/spinner" />
+                <ProgressBar
+                    android:id="@+id/spinner"
+                    android:layout_centerHorizontal="true"
+                    android:layout_centerVertical="true"
+                    android:layout_width="128dp"
+                    android:layout_height="128dp" />
+        </RelativeLayout>
 
 </FrameLayout>

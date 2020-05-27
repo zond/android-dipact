@@ -1,18 +1,27 @@
 package se.oort.diplicity
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.KeyEvent
+import android.view.View
+import android.webkit.DownloadListener
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider.getUriForFile
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -22,6 +31,8 @@ import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
@@ -49,6 +60,11 @@ class Main : AppCompatActivity() {
         @JavascriptInterface
         fun getToken() {
             this@Main.getToken()
+        }
+
+        @JavascriptInterface
+        fun downloadDataURI(uri: String, filename: String) {
+            this@Main.downloadDataURI(uri, filename)
         }
 
         @JavascriptInterface
@@ -170,6 +186,7 @@ class Main : AppCompatActivity() {
             })
 
         setContentView(R.layout.activity_main)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true)
         } else {
@@ -179,10 +196,20 @@ class Main : AppCompatActivity() {
             ).getPath()
             web_view.settings.databasePath = databasePath
         }
-        web_view.setWebViewClient(WebViewClient())
+        web_view.setWebViewClient(object: WebViewClient() {
+            override fun onPageFinished(web_view: WebView, url: String) {
+                this@Main.web_view.visibility = WebView.VISIBLE
+                this@Main.loading_content.visibility = View.GONE
+            }
+        })
         web_view.settings.javaScriptEnabled = true
         web_view.settings.domStorageEnabled = true
         web_view.addJavascriptInterface(WebAppInterface(this), "Wrapper")
+        web_view.setDownloadListener(DownloadListener { url, _, _, _, _ ->
+            val i = Intent(Intent.ACTION_VIEW)
+            i.data = Uri.parse(url)
+            startActivity(i)
+        })
         web_view.loadUrl(SERVER_URL)
     }
 
@@ -243,7 +270,10 @@ class Main : AppCompatActivity() {
             }
             val url = response.headers["Location"]
             if (url == null) {
-                Log.e(TAG, "Error logging in, missing Location header: " + response.code + "/" + response.body!!.string())
+                Log.e(
+                    TAG,
+                    "Error logging in, missing Location header: " + response.code + "/" + response.body!!.string()
+                )
                 web_view.evaluateJavascript(
                     "Globals.WrapperCallbacks.getToken({error: 'No Location header in response: " + response.body!!.string() + "'});",
                     null
@@ -257,5 +287,55 @@ class Main : AppCompatActivity() {
                 );
             }
         }.start()
+    }
+
+    private fun downloadDataURI(uri: String, filename: String) {
+        // Save the file.
+        val u = Uri.parse(uri)
+        val semiColonSplit = u.schemeSpecificPart.split(";")
+        val mimeType = semiColonSplit[0]
+        val commaSplit = semiColonSplit[1].split(",")
+        val base64Part = commaSplit[1]
+        val bytes = Base64.decode(base64Part, Base64.DEFAULT)
+        val path = File(cacheDir, "images")
+        if (!path.exists()) {
+            path.mkdirs()
+        }
+        val outFile = File(path, filename)
+        val outputStream = FileOutputStream(outFile)
+        outputStream.write(bytes)
+        outputStream.close()
+        val fileURI = getUriForFile(this, "se.oort.diplicity.fileprovider", outFile);
+
+        // Notify about saving the file.
+        val intent = Intent()
+        intent.action = Intent.ACTION_VIEW
+        intent.setDataAndType(fileURI, mimeType)
+        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+
+        val channelId = CHANNEL_ID
+        val notification: Notification = Notification.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_otto)
+            .setContentText(getString(R.string.msg_file_downloaded))
+            .setContentTitle(filename)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notification.flags = notification.flags or Notification.FLAG_AUTO_CANCEL
+
+        val notificationManager =
+            this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Default channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        notificationManager.notify(0, notification)
     }
 }

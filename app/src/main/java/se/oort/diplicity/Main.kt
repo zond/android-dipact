@@ -310,8 +310,9 @@ class Main : AppCompatActivity() {
 
         // Notify about saving the file.
         val intent = Intent()
-        intent.action = Intent.ACTION_VIEW
-        intent.setDataAndType(fileURI, mimeType)
+        intent.action = Intent.ACTION_SEND
+        intent.type = mimeType
+        intent.putExtra(Intent.EXTRA_STREAM, fileURI)
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 

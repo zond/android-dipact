@@ -32,7 +32,7 @@ fun ShowNotification(context: Context, payload: String) {
     Log.d(TAG, "Got notification " + actualResult)
 
     val intent = Intent(context, Main::class.java)
-    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
     val dipJSON = Gson().fromJson(
         actualResult,

@@ -11,6 +11,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Base64
 import android.util.Log
 import android.view.KeyEvent
@@ -89,6 +90,12 @@ class Main : AppCompatActivity() {
         @JavascriptInterface
         fun pendingAction(): String? {
             return this@Main.pendingAction
+        }
+
+        @JavascriptInterface
+        fun getDeviceID(): String? {
+            return Settings.Secure.getString(this@Main.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
         }
 
         @JavascriptInterface

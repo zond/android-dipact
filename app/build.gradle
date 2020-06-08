@@ -18,7 +18,6 @@ android {
         applicationId "se.oort.diplicity"
         minSdkVersion 17
         targetSdkVersion 29
-        versionCode gitVersionCode.toInteger()
         versionName gitVersionName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -50,9 +49,11 @@ android {
         beta {
             dimension = 'api'
             versionNameSuffix = '-beta'
+            versionCode (gitVersionCode.toInteger() * 2 + 1)
         }
         prod {
             dimension = 'api'
+            versionCode (gitVersionCode.toInteger() * 2)
         }
     }
 

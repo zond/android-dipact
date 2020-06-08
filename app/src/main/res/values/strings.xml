@@ -3,5 +3,4 @@
 
     <string name="title_activity_main">Diplicity</string>
     <string name="msg_file_downloaded">File downloaded</string>
-    <string name="loading_app">Loading app</string>
 </resources>

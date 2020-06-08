@@ -45,6 +45,16 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+    flavorDimensions 'api'
+    productFlavors {
+        beta {
+            dimension = 'api'
+            versionNameSuffix = '-beta'
+        }
+        prod {
+            dimension = 'api'
+        }
+    }
 
 }
 

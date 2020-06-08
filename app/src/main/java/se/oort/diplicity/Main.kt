@@ -53,13 +53,18 @@ class Main : AppCompatActivity() {
     private val CLIENT_ID =
         "635122585664-ao5i9f2p5365t4htql1qdb6uulso4929.apps.googleusercontent.com"
     private val SERVER_URL =
-        if (BuildConfig.DEBUG) "http://localhost:8080" else "https://dipact.appspot.com"
+        if (BuildConfig.DEBUG) "http://localhost:8080" else CONFIG_SERVER_URL
     private var pendingAction: String? = null;
 
     inner class WebAppInterface(private val mContext: Context) {
         @JavascriptInterface
         fun getToken() {
             this@Main.getToken()
+        }
+
+        @JavascriptInterface
+        fun getAPI() : String? {
+            return CONFIG_API
         }
 
         @JavascriptInterface

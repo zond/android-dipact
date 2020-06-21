@@ -16,10 +16,7 @@ import android.util.Base64
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import android.webkit.DownloadListener
-import android.webkit.JavascriptInterface
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider.getUriForFile
 import com.google.android.gms.auth.api.Auth
@@ -227,6 +224,16 @@ class Main : AppCompatActivity() {
             i.data = Uri.parse(url)
             startActivity(i)
         })
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            web_view.getSettings().setRenderPriority(WebSettings.RenderPriority.HIGH);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            // chromium, enable hardware acceleration
+            web_view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        } else {
+            // older android version, disable hardware acceleration
+            web_view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
         web_view.loadUrl(SERVER_URL)
     }
 

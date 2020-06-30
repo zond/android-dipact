@@ -1,5 +1,6 @@
 package se.oort.diplicity
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -87,6 +88,41 @@ class Main : AppCompatActivity() {
                         this@Main.onNewFCMToken(FCMToken!!)
                     }
                 })
+        }
+
+        @SuppressLint("NewApi")
+        @JavascriptInterface
+        fun notificationStatus(): String {
+            val notificationManager =
+                this@Main.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (notificationManager.areNotificationsPaused()) {
+                return "Notifications paused by Android"
+            }
+            if (!notificationManager.areNotificationsEnabled()) {
+                return "Notifications blocked by Android"
+            }
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                return "OK";
+            }
+            val wantedChannel = NotificationChannel(
+                CHANNEL_ID,
+                "Default channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(wantedChannel)
+            val foundChannel = notificationManager.getNotificationChannel(CHANNEL_ID)
+            if (foundChannel.group != null) {
+                val foundGroup = notificationManager.getNotificationChannelGroup(foundChannel.group)
+                if (foundGroup != null) {
+                    if (foundGroup.isBlocked) {
+                        return "Default channel group is blocked by Android"
+                    }
+                }
+            }
+            if (foundChannel.importance <= NotificationManager.IMPORTANCE_NONE) {
+                return "Default channel blocked by Android"
+            }
+            return "OK"
         }
 
         @JavascriptInterface

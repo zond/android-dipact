@@ -38,7 +38,6 @@ fun ShowNotification(context: Context, payload: String) {
         actualResult,
         DiplicityJSON::class.java
     )
-    val channelId = CHANNEL_ID
     val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     var notificationBuilder: NotificationCompat.Builder? = null
     if (dipJSON.phaseMeta != null) {
@@ -47,7 +46,7 @@ fun ShowNotification(context: Context, payload: String) {
             context, RC_NOTIFICATION, intent,
             PendingIntent.FLAG_ONE_SHOT
         )
-        notificationBuilder = NotificationCompat.Builder(context, channelId)
+        notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_otto)
             .setContentTitle(
                 dipJSON.gameDesc + ": " +
@@ -75,7 +74,7 @@ fun ShowNotification(context: Context, payload: String) {
             context, RC_NOTIFICATION, intent,
             PendingIntent.FLAG_ONE_SHOT
         )
-        notificationBuilder = NotificationCompat.Builder(context, channelId)
+        notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_otto)
             .setContentTitle(
                 dipJSON.message.Sender + " -> " + dipJSON.message.ChannelMembers.joinToString(
@@ -98,7 +97,7 @@ fun ShowNotification(context: Context, payload: String) {
     // Since android Oreo notification channel is needed.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val channel = NotificationChannel(
-            channelId,
+            CHANNEL_ID,
             "Default channel",
             NotificationManager.IMPORTANCE_DEFAULT
         )

@@ -13,7 +13,9 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
+import java.math.BigInteger
 import java.nio.charset.Charset
+import java.security.MessageDigest
 import java.util.*
 import java.util.zip.Inflater
 
@@ -104,7 +106,10 @@ fun ShowNotification(context: Context, payload: String) {
         notificationManager.createNotificationChannel(channel)
     }
 
-    notificationManager.notify(0, notificationBuilder.build())
+    val digest = MessageDigest.getInstance("SHA-1")
+    val gameAndChannelString = (dipJSON.message!!.GameID + "/" + dipJSON.message.ChannelMembers!!.joinToString(","))
+    val notificationID = BigInteger(digest.digest(gameAndChannelString.toByteArray())).toInt()
+    notificationManager.notify(notificationID, notificationBuilder.build())
 }
 
 class MessagingService : FirebaseMessagingService() {

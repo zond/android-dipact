@@ -31,7 +31,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
+import java.math.BigInteger
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -370,7 +372,10 @@ class Main : AppCompatActivity() {
         intent.type = mimeType
         intent.putExtra(Intent.EXTRA_STREAM, fileURI)
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        val notificationID = System.currentTimeMillis().toInt()
+
+        val digest = MessageDigest.getInstance("SHA-1")
+        val notificationID = BigInteger(digest.digest(filename.toByteArray())).toInt()
+
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, notificationID, intent, 0)
 
         val notification: Notification = Notification.Builder(this, CHANNEL_ID)

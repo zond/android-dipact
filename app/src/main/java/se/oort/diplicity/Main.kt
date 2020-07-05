@@ -33,6 +33,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 
 const val TAG = "Diplicity"
@@ -369,10 +370,10 @@ class Main : AppCompatActivity() {
         intent.type = mimeType
         intent.putExtra(Intent.EXTRA_STREAM, fileURI)
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+        val notificationID = System.currentTimeMillis().toInt()
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, notificationID, intent, 0)
 
-        val channelId = CHANNEL_ID
-        val notification: Notification = Notification.Builder(this, channelId)
+        val notification: Notification = Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_otto)
             .setContentText(getString(R.string.msg_file_downloaded))
             .setContentTitle(filename)
@@ -386,13 +387,13 @@ class Main : AppCompatActivity() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId,
+                CHANNEL_ID,
                 "Default channel",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(0, notification)
+        notificationManager.notify(notificationID, notification)
     }
 }

@@ -42,7 +42,9 @@ fun ShowNotification(context: Context, payload: String) {
     )
     val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     var notificationBuilder: NotificationCompat.Builder? = null
+    var hashString = ""
     if (dipJSON.phaseMeta != null) {
+        hashString = dipJSON.gameID!!
         intent.putExtra(CLICK_ACTION, "/Game/" + dipJSON.gameID)
         val pendingIntent = PendingIntent.getActivity(
             context, RC_NOTIFICATION, intent,
@@ -66,11 +68,11 @@ fun ShowNotification(context: Context, payload: String) {
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
     } else if (dipJSON.message != null) {
+        val memberString = dipJSON.message.ChannelMembers!!.joinToString(",")
+        hashString = dipJSON.message.GameID + "/" + memberString
         intent.putExtra(
             CLICK_ACTION,
-            "/Game/" + dipJSON.message.GameID + "/Channel/" + dipJSON.message.ChannelMembers!!.joinToString(
-                ","
-            ) + "/Messages"
+            "/Game/" + dipJSON.message.GameID + "/Channel/" + memberString + "/Messages"
         )
         val pendingIntent = PendingIntent.getActivity(
             context, RC_NOTIFICATION, intent,
@@ -107,8 +109,7 @@ fun ShowNotification(context: Context, payload: String) {
     }
 
     val digest = MessageDigest.getInstance("SHA-1")
-    val gameAndChannelString = (dipJSON.message!!.GameID + "/" + dipJSON.message.ChannelMembers!!.joinToString(","))
-    val notificationID = BigInteger(digest.digest(gameAndChannelString.toByteArray())).toInt()
+    val notificationID = BigInteger(digest.digest(hashString.toByteArray())).toInt()
     notificationManager.notify(notificationID, notificationBuilder.build())
 }
 

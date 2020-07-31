@@ -93,20 +93,19 @@ class Main : AppCompatActivity() {
                 })
         }
 
-        @SuppressLint("NewApi")
         @JavascriptInterface
         fun notificationStatus(): String {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                return "OK"
+            }
             val notificationManager =
-                this@Main.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            if (notificationManager.areNotificationsPaused()) {
-                return "Notifications paused by Android"
-            }
-            if (!notificationManager.areNotificationsEnabled()) {
-                return "Notifications blocked by Android"
-            }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-                return "OK";
-            }
+				this@Main.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+			if (!notificationManager.areNotificationsEnabled()) {
+				return "Notifications blocked by Android"
+			}
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			    return "OK"
+			}
             val wantedChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Default channel",
@@ -114,17 +113,26 @@ class Main : AppCompatActivity() {
             )
             notificationManager.createNotificationChannel(wantedChannel)
             val foundChannel = notificationManager.getNotificationChannel(CHANNEL_ID)
-            if (foundChannel.group != null) {
-                val foundGroup = notificationManager.getNotificationChannelGroup(foundChannel.group)
-                if (foundGroup != null) {
-                    if (foundGroup.isBlocked) {
-                        return "Default channel group is blocked by Android"
-                    }
-                }
-            }
             if (foundChannel.importance <= NotificationManager.IMPORTANCE_NONE) {
                 return "Default channel blocked by Android"
             }
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+				return "OK";
+			}
+			if (foundChannel.group != null) {
+				val foundGroup = notificationManager.getNotificationChannelGroup(foundChannel.group)
+					if (foundGroup != null) {
+						if (foundGroup.isBlocked) {
+							return "Default channel group is blocked by Android"
+						}
+					}
+			}
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+				return "OK";
+			}
+			if (notificationManager.areNotificationsPaused()) {
+				return "Notifications paused by Android"
+			}
             return "OK"
         }
 
@@ -237,6 +245,7 @@ class Main : AppCompatActivity() {
                 "databases",
                 Context.MODE_PRIVATE
             ).getPath()
+			@Suppress("DEPRECATION")
             web_view.settings.databasePath = databasePath
         }
         web_view.setWebViewClient(object: WebViewClient() {
@@ -264,6 +273,7 @@ class Main : AppCompatActivity() {
             startActivity(i)
         })
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
+			@Suppress("DEPRECATION")
             web_view.getSettings().setRenderPriority(WebSettings.RenderPriority.HIGH);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -378,8 +388,14 @@ class Main : AppCompatActivity() {
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, notificationID, intent, 0)
 
-        val notification: Notification = Notification.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_otto)
+		val notificationBuilder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			Notification.Builder(this, CHANNEL_ID)
+		} else {
+			@Suppress("DEPRECATION")
+			Notification.Builder(this)
+		}
+		val notification: Notification = notificationBuilder
+			.setSmallIcon(R.drawable.ic_otto)
             .setContentText(getString(R.string.msg_file_downloaded))
             .setContentTitle(filename)
             .setContentIntent(pendingIntent)

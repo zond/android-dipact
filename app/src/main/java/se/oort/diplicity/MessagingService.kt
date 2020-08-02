@@ -59,10 +59,7 @@ fun ShowNotification(context: Context, payload: String) {
                         dipJSON.phaseMeta.Type
             )
             .setContentText(
-                dipJSON.gameDesc + ": " +
-                        dipJSON.phaseMeta.Season + " " +
-                        dipJSON.phaseMeta.Year + ", " +
-                        dipJSON.phaseMeta.Type + " has resolved"
+                dipJSON.gameDesc + " has a new phase"
             )
             .setAutoCancel(true)
             .setSound(defaultSoundUri)

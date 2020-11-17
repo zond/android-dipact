@@ -41,7 +41,7 @@ jobs:
                   echo "AAPT_BINARY=$(ls -1 ${ANDROID_HOME}/build-tools/*/aapt | tail -n 1)" >> $GITHUB_ENV
             - name: Extract APK badging
               run: |
-                  echo "APK_BADGING=\"$(${AAPT_BINARY} dump badging app/build/outputs/apk/beta/release/app-beta-release.apk)\""
+                  echo "APK_BADGING=\"$(${AAPT_BINARY} dump badging app/build/outputs/apk/beta/release/app-beta-release.apk | tr \"\n\" \" \")\""
                   echo "APK_BADGING=\"$(${AAPT_BINARY} dump badging app/build/outputs/apk/beta/release/app-beta-release.apk)\"" >> $GITHUB_ENV
             - name: Extract release name
               run: |

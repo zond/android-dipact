@@ -260,7 +260,9 @@ class Main : AppCompatActivity() {
                 if (url.startsWith(SERVER_URL)) {
                     return false
                 }
-                this@Main.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                this@Main.startActivity(intent)
                 return true
             }
         })

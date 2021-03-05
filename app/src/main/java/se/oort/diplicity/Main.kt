@@ -339,7 +339,7 @@ class Main : AppCompatActivity() {
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .build()
                 .newCall(request.build()).execute()
-            if (response.code != 307) {
+            if (response.code < 300 || response.code >= 400) {
                 Log.e(TAG, "Error logging in: " + response.code + "/" + response.body!!.string())
                 runOnUiThread {
                     runJavascript("Globals.WrapperCallbacks.getToken({error: '" + response.body!!.string() + "'});")

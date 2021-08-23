@@ -163,7 +163,7 @@ class Main : AppCompatActivity() {
 
     fun onNewFCMToken(fcmToken: String) {
         runOnUiThread {
-            runJavascript("Globals.messaging.onNewToken('" + fcmToken + "');")
+            runJavascript("window.Globals.messaging.onNewToken('" + fcmToken + "');")
         }
     }
 
@@ -315,7 +315,7 @@ class Main : AppCompatActivity() {
             } else {
                 Log.e(TAG, "Error logging in: " + result.status)
                 runOnUiThread {
-                    runJavascript("Globals.WrapperCallbacks.getToken({error: '" + result.status + "'});")
+                    runJavascript("window.Globals.WrapperCallbacks.getToken({error: '" + result.status + "'});")
                 }
             }
         }
@@ -342,7 +342,7 @@ class Main : AppCompatActivity() {
             if (response.code < 300 || response.code >= 400) {
                 Log.e(TAG, "Error logging in: " + response.code + "/" + response.body!!.string())
                 runOnUiThread {
-                    runJavascript("Globals.WrapperCallbacks.getToken({error: '" + response.body!!.string() + "'});")
+                    runJavascript("window.Globals.WrapperCallbacks.getToken({error: '" + response.body!!.string() + "'});")
                 }
             }
             val url = response.headers["Location"]
@@ -351,11 +351,11 @@ class Main : AppCompatActivity() {
                     TAG,
                     "Error logging in, missing Location header: " + response.code + "/" + response.body!!.string()
                 )
-                runJavascript("Globals.WrapperCallbacks.getToken({error: 'No Location header in response: " + response.body!!.string() + "'});")
+                runJavascript("window.Globals.WrapperCallbacks.getToken({error: 'No Location header in response: " + response.body!!.string() + "'});")
             }
             val parsedURI: Uri = Uri.parse(url)
             runOnUiThread {
-                runJavascript("Globals.WrapperCallbacks.getToken({token: '" + parsedURI.getQueryParameter("token")!! + "'});")
+                runJavascript("window.Globals.WrapperCallbacks.getToken({token: '" + parsedURI.getQueryParameter("token")!! + "'});")
             }
         }.start()
     }
